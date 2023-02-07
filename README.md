@@ -267,3 +267,172 @@ export class CatsController {
 ```
 
 Controller에서 catService가 constructor를 통해 주입이 된다, 여기서 private를 사용하면 선언과 초기화가 동시에 이루어진다.
+
+
+
+## 미들웨어 (Middleware)
+
+> 애플리케이션에서 공통 처리 담당
+
+미들웨어는 라우터 핸들러 이전에 호출되는 함수이다.
+
+클라이언트의 요청을 라우터 핸들러가 받기 전에 가로채 다른 작업을 처리할 수 있다.
+
+
+
+- 모든 코드가 공통으로 실행해야 하는 인증, 로깅들을 처리할 수 있다.
+- 요청과 응답 객체를 변경할 수 있다.
+- 요청의 validation을 체크하여 오류 처리를 할 수 있다.
+
+> validation - 현재 상태나 입력값을 확인하고, 검증하는 것
+
+
+
+### 미들웨어 사용법
+
+1. @Injectable 데코레이터 사용
+2. NestMiddleware 인터페이스를 implements해서 사용함.
+3. Module class 내부에 configure를 사용하여 선언, 이때 NestModule 인터페이스를 implements 함. 
+
+------
+
+logger.middleware.ts
+
+```js
+import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
+
+@Injectable()
+export class LoggerMiddleware implements NestMiddleware {
+  use(req: Request, res: Response, next: NextFunction) {
+    console.log('Request...');
+    next();
+  }
+}
+```
+
+app.module.ts
+
+```js
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { CatsModule } from './cats/cats.module';
+
+@Module({
+  imports: [CatsModule],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes('cats');
+  }
+}
+```
+
+라우트를 특정하여 사용할 수도 있음.
+
+```js
+.forRoutes({ path: 'cats', method: RequestMethod.GET });
+```
+
+
+
+### Middleware 관리를 위한 모듈 - MiddlewareConsumer
+
+MiddlewareConsumer이라는 헬퍼클래스를 사용하면 여러 스타일로 미들웨어를 설정할 수 있음.
+
+forRoutes( ) 메소드는 단일 문자열, 여러 문자열, RouteInfo 객체, 컨트롤러 클래스 및 여러 컨트롤러
+
+클래스를 사용할 수 있다, 다음은 Controller의 사용 예시다.
+
+```js
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { CatsModule } from './cats/cats.module';
+import { CatsController } from './cats/cats.controller.ts';
+
+@Module({
+  imports: [CatsModule],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes(CatsController);
+  }
+}
+```
+
+apply 메서드는 여러 미들웨어를 지정할 수 있다.
+
+
+
+#### 라우트 예외처리
+
+exclude( ) 메소드로 라우트를 제외할 수 있다.
+
+```js
+consumer
+  .apply(LoggerMiddleware)
+  .exclude(
+    { path: 'cats', method: RequestMethod.GET },
+    { path: 'cats', method: RequestMethod.POST },
+    'cats/(.*)',
+  )
+  .forRoutes(CatsController);
+```
+
+
+
+#### 함수형 미들웨어
+
+지금까지 만든 클래스 미들웨어는 간단한 함수형 미들웨어로 변경할 수 있다.
+
+logger.middleware.ts
+
+```js
+import { Request, Response, NextFunction } from 'express';
+
+export function logger(req: Request, res: Response, next: NextFunction) {
+  console.log(`Request...`);
+  next();
+};
+```
+
+위의 logger 함수는 Module에서 다음과 같이 사용할 수 있습니다.
+
+app.module.ts
+
+```js
+consumer
+  .apply(logger)
+  .forRoutes(CatsController);
+```
+
+
+
+**여러개 미들웨어 사용**
+
+apply( ) 메서드에 여러 개의 미들웨어를 사용할 수 있다.
+
+```js
+consumer.apply(cors(), helmet(), logger).forRoutes(CatsController);
+```
+
+
+
+#### **Global 미들웨어**
+
+모든 경로에서 사용하는 미들웨어는 INestApplication 인스턴스에서 제공하는 user() 메서드를 사용할 수 있습니다.
+
+```js
+const app = await NestFactory.create(AppModule);
+app.use(logger);
+await app.listen(3000);
+```
+
+- 단, Global 미들웨어에서 DI 컨테이너에 액세스할 수 없다.
+- app.use()에서 미들웨어를 사용할 때는 대신 함수형 미들웨어를 사용한다.
+
+> DI가 안되기 때문에 클래스로 만들어진 미들웨어가 사용이 안되기에, 함수형 미들웨어로 받아준다.

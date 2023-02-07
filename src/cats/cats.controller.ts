@@ -1,4 +1,4 @@
-import { CreateCatDto, UpdateCatDto } from './dto/dto';
+import { CreateCatDto, UpdateCatDto } from './dto/dtoTypes';
 import {
   Controller,
   Post,
