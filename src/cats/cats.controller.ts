@@ -8,17 +8,19 @@ import {
   Param,
   Body,
 } from '@nestjs/common';
+import { CatsService } from './cats.service';
 
 @Controller('cats')
 export class CatsController {
+  constructor(private readonly catsService: CatsService) {}
   @Post()
   create(@Body() createCatDto: CreateCatDto) {
-    return 'This action adds a new cat';
+    return this.catsService.create(createCatDto);
   }
 
   @Get()
   findAll() {
-    return `this action returns all cats`;
+    return this.catsService.findAll();
   }
 
   @Get(':id')
