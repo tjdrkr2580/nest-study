@@ -32,7 +32,7 @@ export class CatsController {
   }
 
   @Delete(':id')
-  remove(@Param(':id') id: string) {
-    return `this Action removes ${id} cat`;
+  remove(@Param('id') id: string) {
+    return `this action removes #${id}`;
   }
 }
