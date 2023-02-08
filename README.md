@@ -436,3 +436,104 @@ await app.listen(3000);
 - app.use()에서 미들웨어를 사용할 때는 대신 함수형 미들웨어를 사용한다.
 
 > DI가 안되기 때문에 클래스로 만들어진 미들웨어가 사용이 안되기에, 함수형 미들웨어로 받아준다.
+
+## TypeORM은 건너뛸 것이다. | Prisma를 사용.
+
+
+
+## ConfigModule?
+
+응용 프로그램은 종종 다른 환경에서 실행해야 하고 환경에 따라 다른 구성 설정을 사용해야 함.
+
+dotenv(환경변수)를 내부적으로 활용할 수 있도록 도와준다.
+
+```javascript
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UsersModule } from './users/users.module';
+import { CatsModule } from './cats/cats.module';
+import { PrismaService } from './prisma/prisma.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
+
+@Module({
+  imports: [
+    UsersModule,
+    CatsModule,
+    PrismaModule,
+    ConfigModule.forRoot(),
+  ],
+  controllers: [AppController],
+  providers: [AppService, PrismaService],
+})
+export class AppModule {
+}
+
+```
+
+이런 식으로 ConfigModule을 imports에 넣어준다.
+
+forRoot 안에 작성할 수 있는 인자들 중 몇개만 정리해보았다.
+
+```javascript
+export interface ConfigModuleOptions {
+    /**
+    true 몇 env 개체 값이 메모리에 캐시가 됨.
+     */
+    cache?: boolean;
+    /**
+    만약 true일 경우에 ConfigModule을 글로벌 모듈로 등록한다.
+     */
+    isGlobal?: boolean;
+    /**
+     true면 env가 무시된다.
+     */
+    ignoreEnvFile?: boolean;
+    /**
+     true먄 미리 정의된 환경 변수의 유효성이 검사되지 않는다.
+     */
+    ignoreEnvVars?: boolean;
+    /**
+    	로드할 환경 파일의 경로
+     */
+    envFilePath?: string | string[];
+    /**
+     * 환경 파일 인코딩
+     */
+}
+
+```
+
+**isGlobal? : boolean**
+
+Global을 등록하지 않으면 해당 모듈을 사용하는 곳에서 import를 받아야 하지만,
+
+Global로 등록을 하게 될 경우, provider들을 import 하지 않고 Injection 받아 사용할 수 있다고 한다.
+
+
+
+**ignoreEnvFile? : boolean**
+
+해당 flag 값이 true가 될 경우 env의 값들을 읽어오지 않는다.
+
+
+
+**envFilePath**? : string | string[ ]
+
+단독으로 지정할 수 있으며, 배열로도 지정할 수 있는데 배열로 지정할 경우 순서대로 탐색하며
+
+가정 먼저 발견되는 .env 파일을 로드하게 된다.
+
+[자세한 내용](https://velog.io/@dev_leewoooo/NestJs-Config)
+
+
+
+ConfigModule를 만들고, 설정을 하고 난 후 prismaService에서 이용할 것이기 때문에
+
+
+
+
+
+
+
