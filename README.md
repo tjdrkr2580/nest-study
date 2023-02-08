@@ -533,16 +533,37 @@ ConfigModule를 만들고, 설정을 하고 난 후 prismaService에서 이용�
 
 ```javascript
 import { ConfigService } from '@nestjs/config';
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  INestApplication,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class PrismaService extends PrismaClient {
-  constructor(private readonly config: ConfigService) {
-    super({
-      datasources: {
-        db: config.get('DATABASE_URL'),
-      },
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+  // constructor(private readonly config: ConfigService) {
+  //   super({
+  //     datasources: {
+  //       db: config.get('DATABASE_URL'),
+  //     },
+  //   });
+  // }
+  async onModuleInit() {
+    this.$connect();
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+
+  async enableShutdownHooks(app: INestApplication) {
+    this.$on('beforeExit', async () => {
+      await app.close();
     });
   }
 }
@@ -553,13 +574,17 @@ prisma.service.ts의 코드는 이런 식으로 구성이 될 것 같다.
 
 근데 datasources 쪽 코드를 아직도 이해를 못하겠다.
 
-다른 방법도 있는 것 같기도 하고..
+다른 방법도 있는 것 같기도 하고.. 이 부분 코드를 [참고](https://blog.logrocket.com/how-to-use-nestjs-prisma/)를 해봐도 좋을 것 같다, Example들이 너무 다 달라서..
 
-[참고](https://blog.logrocket.com/how-to-use-nestjs-prisma/)를 해봐도 좋을 것 같다.
+위에 작성되어 있는 enableShutdownHooks은 종료 신호를 수신하고 종료 후크가 실행되기 전
+
+신호에 다른 리스너가 있는 경우 현재 프로세스를 죽이지 않는 설정을 해준다고 한다. <의미를 잘..>
+
+그리고 이를 적용하려면 main.ts에 설정을 추가로 해주어야 한다고 함.
 
 
 
-Example들이 너무 다 달라서 가늠을 못하겠다.
+
 
 
 
