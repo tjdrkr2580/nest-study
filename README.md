@@ -80,6 +80,28 @@ app.enableCors({
 
 
 
+그래서 위와 같은 설정들을 모두 적용하고 나면 위와 같은 코드가 된다.
+
+```typescript
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import * as cookieParser from 'cookie-parser';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.enableCors({
+    credentials: true,
+    origin: ['http://localhost:3000'],
+  });
+  app.use(cookieParser());
+  await app.listen(3001);
+}
+bootstrap();
+
+```
+
 
 
 
