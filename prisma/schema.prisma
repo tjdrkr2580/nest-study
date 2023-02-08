@@ -26,4 +26,5 @@ model Task {
   description String?
   user User @relation(fields: [userId], references: [id])
   userId Int
+  isDone Boolean
 }
