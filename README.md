@@ -531,6 +531,36 @@ Global로 등록을 하게 될 경우, provider들을 import 하지 않고 Injec
 
 ConfigModule를 만들고, 설정을 하고 난 후 prismaService에서 이용할 것이기 때문에
 
+```javascript
+import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient {
+  constructor(private readonly config: ConfigService) {
+    super({
+      datasources: {
+        db: config.get('DATABASE_URL'),
+      },
+    });
+  }
+}
+
+```
+
+prisma.service.ts의 코드는 이런 식으로 구성이 될 것 같다.
+
+근데 datasources 쪽 코드를 아직도 이해를 못하겠다.
+
+다른 방법도 있는 것 같기도 하고..
+
+[참고](https://blog.logrocket.com/how-to-use-nestjs-prisma/)를 해봐도 좋을 것 같다.
+
+
+
+Example들이 너무 다 달라서 가늠을 못하겠다.
+
 
 
 
