@@ -10,3 +10,14 @@ export class todoDto {
   @IsBoolean()
   isDone: boolean;
 }
+
+export class updateDto {
+  @IsString()
+  title: string;
+
+  @IsOptional()
+  description?: string;
+
+  @IsBoolean()
+  isDone: boolean;
+}
