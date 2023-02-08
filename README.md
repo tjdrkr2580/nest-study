@@ -582,6 +582,27 @@ prisma.service.ts의 코드는 이런 식으로 구성이 될 것 같다.
 
 그리고 이를 적용하려면 main.ts에 설정을 추가로 해주어야 한다고 함.
 
+```javascript
+import { PrismaService } from './prisma/prisma.service';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  const prismaService = app.get(PrismaService);
+  await prismaService.enableShutdownHooks(app);
+  await app.listen(3005);
+}
+bootstrap();
+
+```
+
+prismaService를 가져왔는데 아직 문법이 잘 익숙치 않아서 app.get 안에 PrismaService를 넣는 이유가
+
+enableShutdownHooks를 사용하기 위함이라고 이해했다, 무언가를 사용할 때는 app.use( )을 사용하는
+
+것으로 알고 있기 때문이다.
+
 
 
 
