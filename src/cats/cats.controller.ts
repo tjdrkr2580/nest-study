@@ -2,10 +2,11 @@ import {
   Controller,
   Post,
   Get,
-  Put,
   Delete,
   Param,
+  ParseIntPipe,
   Body,
+  Patch,
 } from '@nestjs/common';
 import { CatsService } from './cats.service';
 import { CreateCatDto, UpdateCatDto } from './dto/dto';
@@ -14,8 +15,8 @@ import { CreateCatDto, UpdateCatDto } from './dto/dto';
 export class CatsController {
   constructor(private readonly catsService: CatsService) {}
   @Post()
-  create(@Body() createCatDto: CreateCatDto) {
-    return this.catsService.create(createCatDto);
+  create(@Body() dto: CreateCatDto) {
+    return this.catsService.create(dto);
   }
 
   @Get()
@@ -24,17 +25,20 @@ export class CatsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return `This action returns a #${id} cat`;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.catsService.findOne(id);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateCatDto: UpdateCatDto) {
-    return `this action updates a #${id} cat`;
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateCatDto: UpdateCatDto,
+  ) {
+    return this.catsService.update(id, updateCatDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return `this action removes #${id}`;
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.catsService.remove(id);
   }
 }

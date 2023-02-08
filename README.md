@@ -505,7 +505,7 @@ export interface ConfigModuleOptions {
 
 ```
 
-**isGlobal? : boolean**
+- **isGlobal? : boolean**
 
 Global을 등록하지 않으면 해당 모듈을 사용하는 곳에서 import를 받아야 하지만,
 
@@ -513,13 +513,13 @@ Global로 등록을 하게 될 경우, provider들을 import 하지 않고 Injec
 
 
 
-**ignoreEnvFile? : boolean**
+- **ignoreEnvFile? : boolean**
 
 해당 flag 값이 true가 될 경우 env의 값들을 읽어오지 않는다.
 
 
 
-**envFilePath**? : string | string[ ]
+- **envFilePath**? : string | string[ ]
 
 단독으로 지정할 수 있으며, 배열로도 지정할 수 있는데 배열로 지정할 경우 순서대로 탐색하며
 
@@ -605,9 +605,103 @@ enableShutdownHooks를 사용하기 위함이라고 이해했다, 무언가를 �
 
 
 
+## 간단한 CRUD 구현하기
 
+```javascript
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Param,
+  ParseIntPipe,
+  Body,
+  Patch,
+} from '@nestjs/common';
+import { CatsService } from './cats.service';
+import { CreateCatDto, UpdateCatDto } from './dto/dto';
 
+@Controller('cats')
+export class CatsController {
+  constructor(private readonly catsService: CatsService) {}
+  @Post()
+  create(@Body() dto: CreateCatDto) {
+    return this.catsService.create(dto);
+  }
 
+  @Get()
+  findAll() {
+    return this.catsService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.catsService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateCatDto: UpdateCatDto,
+  ) {
+    return this.catsService.update(id, updateCatDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.catsService.remove(id);
+  }
+}
+```
+
+> param을 통해서 id값을 뽑아내면 그 id의 type은 string이여서 오류가 출력되었다, 
+> 그리하여 이를 해결하는 방법으로 ParseIntPipe를 통해서 string type에 id를 number로 
+> 변환할 수 있었다.
+
+```javascript
+  async create(dto: CreateCatDto): Promise<Cat> {
+    const task = await this.prisma.cat.create({
+      data: {
+        name: dto.name,
+        age: dto.age,
+        breed: dto.breed,
+      },
+    });
+    return task;
+  }
+  async findAll(): Promise<Cat[]> {
+    return await this.prisma.cat.findMany({});
+  }
+
+  async update(id: number, dto: Cat): Promise<Cat> {
+    return await this.prisma.cat.update({
+      where: {
+        id,
+      },
+      data: {
+        ...dto,
+      },
+    });
+  }
+
+  async findOne(id: number): Promise<Cat> {
+    return await this.prisma.cat.findFirst({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async remove(id: number): Promise<Cat> {
+    return await this.prisma.cat.delete({
+      where: {
+        id,
+      },
+    });
+  }
+```
+
+코드의 가독성을 높이고자 Cat만을 사용하는 것이 아닌 CreateCatDto와 UpdateCatDto로 나누었다.
 
 
 
