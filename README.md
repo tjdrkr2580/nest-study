@@ -104,7 +104,72 @@ bootstrap();
 
 
 
+## SignUp
 
+우선 필기를 하기 전에 에러 핸들링과, return 메세지의 표준 등 아는 지식이 존재하지 않아
+
+내 마음대로 진행했다는 의사를 표현하고 싶다.
+
+```ts
+import { msg } from './../interface/msg';
+import { signUpDto } from './dto/auth.dto';
+import { PrismaService } from './../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+
+@Injectable()
+export class AuthService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async signUp(dto: signUpDto): Promise<msg> {
+    const hashPassword = await bcrypt.hash(dto.password, 10);
+    try {
+      await this.prisma.user.create({
+        data: {
+          name: dto.name,
+          username: dto.username,
+          hashPassword,
+        },
+      });
+      return { msg: 'okay' };
+    } catch (err) {
+      if (err.code === 'P2002')
+        return { msg: '동일한 아이디를 사용한 계정이 존재합니다.' };
+      return err;
+    }
+  }
+}
+
+```
+
+비밀번호를 그냥 저장하면 안되니, bcrypt를 통해서 암호화를 시켜 데이터베이스에
+
+저장할 수 있도록 조치하였다. 그리고 만약 아이디가 Unique한데 같은 아이디를 `Create`하려는
+
+시도가 생겼을 경우 Prisma에서 P2002를 반환하길래 이를 한글 메세지로 return 시켜주었다.
+
+만약 그 오류가 아닐 경우에는 그냥 err가 return 되도록 작성 하였다.
+
+
+
+## Signin
+
+```typescript
+  async signIn(dto: signInDto): Promise<msg> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        username: dto.username,
+      },
+    });
+    if (!user) throw new Error('아이디나 비밀번호가 틀렸습니다');
+    const isPasswordCorrect = await bcrypt.compare(
+      dto.password,
+      user.hashPassword,
+    );
+    if (!isPasswordCorrect) throw new Error('아이디나 비밀번호가 틀렸습니다');
+    return { msg: 'login Success' };
+  }
+```
 
 
 
